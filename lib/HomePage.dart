@@ -1,9 +1,6 @@
-import 'dart:io';
-
 import 'package:bankerl_finder/model/Bench.dart';
 import 'package:bankerl_finder/service/BenchService.dart';
 import 'package:bankerl_finder/service/DialogService.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:geolocator/geolocator.dart';
@@ -28,10 +25,6 @@ class _HomePageState extends State<HomePage> {
     super.initState();
     _goToCurrPosition();
     _getBenches();
-
-    print(_center.toJson());
-
-    _benches.add(_getMarker(LatLng(49.9012148, 12.2009079)));
   }
 
   @override
@@ -103,16 +96,21 @@ class _HomePageState extends State<HomePage> {
   void _getBenches() async {
     List<Bench> benches = await _benchService.getBenches(context);
 
+    _benches = [];
+
     _benches.addAll(
-      benches.map((e) => _getMarker(e.position)),
+      benches.map((e) => _getMarker(e)),
     );
+
+    setState(() => _benches);
   }
 
-  Marker _getMarker(LatLng position) {
+  Marker _getMarker(Bench bench) {
     return Marker(
-      point: position,
+      point: bench.position,
       child: GestureDetector(
-        onTap: () => _showMarkerBottomSheet(position),
+        onTap: () => _showMarkerBottomSheet(bench.position),
+        onLongPress: () => _showDeleteDialog(bench),
         child: const Icon(Icons.location_on, color: Colors.blue, size: 40),
       ),
     );
@@ -123,11 +121,18 @@ class _HomePageState extends State<HomePage> {
       context: context,
       builder: (BuildContext context) {
         return SizedBox(
-            height: 100,
+            height: 120,
             child: Padding(
               padding: const EdgeInsets.all(10.0),
               child: Row(children: [
-                Text("${position.latitude}, ${position.longitude}", style: const TextStyle(fontSize: 20)),
+                const Padding(
+                  padding: EdgeInsets.all(8.0),
+                  child: Icon(Icons.location_on, size: 28),
+                ),
+                Column(mainAxisAlignment: MainAxisAlignment.center, crossAxisAlignment: CrossAxisAlignment.start,children: [
+                  Text(position.latitude.toString(), style: const TextStyle(fontSize: 20)),
+                  Text(position.longitude.toString(), style: const TextStyle(fontSize: 20)),
+                ]),
                 const Spacer(),
                 IconButton(
                   tooltip: "In Google Maps öffnen",
@@ -140,12 +145,45 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
+  Future<void> _showDeleteDialog(Bench bench) async {
+    return showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return StatefulBuilder(builder: (context, setState) {
+          return AlertDialog(
+            title: const Text("Bank löschen?"),
+            actionsOverflowButtonSpacing: 20,
+            actions: [
+              TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text("Abbrechen")),
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                  _deleteBench(bench);
+                },
+                style: ElevatedButton.styleFrom(
+                    backgroundColor: Theme.of(context).primaryColor, foregroundColor: Colors.white),
+                child: const Text("Löschen"),
+              ),
+            ],
+          );
+        });
+      },
+    );
+  }
+
   void _openGoogleMaps(LatLng position) => MapsLauncher.launchCoordinates(position.latitude, position.longitude);
 
-  void _addBench(LatLng pos) {
+  Future<void> _addBench(LatLng pos) async {
     Bench bench = Bench(name: "", position: pos);
 
-    _benchService.createBench(context, bench);
+    await _benchService.createBench(context, bench);
+
+    _getBenches();
+  }
+
+  Future<void> _deleteBench(Bench bench) async {
+    await _benchService.deleteBench(context, bench);
+    _getBenches();
   }
 
   void _goToCurrPosition() async {

@@ -41,4 +41,21 @@ class BenchService {
       throw Exception(res.statusCode);
     }
   }
+
+  Future<void> deleteBench(BuildContext context, Bench bench) async {
+    Response res = await delete(
+      Uri.parse("$baseUrl/${bench.id}"),
+      body: jsonEncode(bench.toJSON()),
+      headers: {"Content-Type": "application/json"},
+    );
+
+    if (res.statusCode != 200) {
+      SnackBarService.errorSnackBar(
+        context: context,
+        title: "Fehler ${res.statusCode}",
+        message: "Ein Fehler ist aufgetreten! Versuche es später erneut.",
+      );
+      throw Exception(res.statusCode);
+    }
+  }
 }
