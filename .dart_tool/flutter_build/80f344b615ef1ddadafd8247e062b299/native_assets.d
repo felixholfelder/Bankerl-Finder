@@ -1,1 +1,0 @@
- D:\\SWE\\Git\\bankerl-finder\\.dart_tool\\flutter_build\\80f344b615ef1ddadafd8247e062b299\\native_assets.yaml: 
