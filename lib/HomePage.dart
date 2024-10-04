@@ -129,10 +129,13 @@ class _HomePageState extends State<HomePage> {
                   padding: EdgeInsets.all(8.0),
                   child: Icon(Icons.location_on, size: 28),
                 ),
-                Column(mainAxisAlignment: MainAxisAlignment.center, crossAxisAlignment: CrossAxisAlignment.start,children: [
-                  Text(position.latitude.toString(), style: const TextStyle(fontSize: 20)),
-                  Text(position.longitude.toString(), style: const TextStyle(fontSize: 20)),
-                ]),
+                Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(position.latitude.toString(), style: const TextStyle(fontSize: 20)),
+                      Text(position.longitude.toString(), style: const TextStyle(fontSize: 20)),
+                    ]),
                 const Spacer(),
                 IconButton(
                   tooltip: "In Google Maps öffnen",
