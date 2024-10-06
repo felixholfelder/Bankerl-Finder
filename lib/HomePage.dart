@@ -109,6 +109,8 @@ class _HomePageState extends State<HomePage> {
     _benches.addAll(
       benches.map((e) => _getMarker(e)),
     );
+
+    setState(() => _benches);
   }
 
   Marker _getMarker(Bench bench) {
