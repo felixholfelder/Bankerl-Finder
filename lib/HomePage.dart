@@ -17,8 +17,11 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   final BenchService _benchService = BenchService();
 
-  var _center = const LatLng(49.9012148, 12.2009079);
+  LatLng _center = LatLng(0, 0);
+  final double _zoom = 14;
   List<Marker> _benches = List.of({});
+
+  final _mapController = MapController();
 
   @override
   void initState() {
@@ -33,13 +36,17 @@ class _HomePageState extends State<HomePage> {
       appBar: AppBar(
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
         title: const Text("Bankerl Finder"),
-        actions: [IconButton(onPressed: _goToCurrPosition, icon: const Icon(Icons.my_location))],
+        actions: [
+          IconButton(onPressed: _getBenches, icon: const Icon(Icons.refresh)),
+          IconButton(onPressed: _goToCurrPosition, icon: const Icon(Icons.my_location))
+        ],
       ),
       body: Stack(
         children: [
           FlutterMap(
+            mapController: _mapController,
             options: MapOptions(
-                initialZoom: 14,
+                initialZoom: _zoom,
                 initialCenter: _center,
                 onTap: (TapPosition pos, LatLng latlng) => _openBenchDialog(context, pos, latlng),
                 interactionOptions: const InteractionOptions(flags: InteractiveFlag.drag | InteractiveFlag.pinchZoom),
@@ -49,6 +56,7 @@ class _HomePageState extends State<HomePage> {
               MarkerLayer(
                 markers: [
                   Marker(
+                    alignment: Alignment.topCenter,
                     point: _center,
                     child: const Icon(
                       Icons.location_on,
@@ -96,18 +104,17 @@ class _HomePageState extends State<HomePage> {
   void _getBenches() async {
     List<Bench> benches = await _benchService.getBenches(context);
 
-    _benches = [];
+    setState(() => _benches = []);
 
     _benches.addAll(
       benches.map((e) => _getMarker(e)),
     );
-
-    setState(() => _benches);
   }
 
   Marker _getMarker(Bench bench) {
     return Marker(
       point: bench.position,
+      alignment: Alignment.topCenter,
       child: GestureDetector(
         onTap: () => _showMarkerBottomSheet(bench.position),
         onLongPress: () => _showDeleteDialog(bench),
@@ -192,6 +199,7 @@ class _HomePageState extends State<HomePage> {
   void _goToCurrPosition() async {
     Position pos = await _getPosition();
     setState(() => _center = LatLng(pos.latitude, pos.longitude));
+    _mapController.move(_center, _zoom);
   }
 
   Future<Position> _getPosition() async {
