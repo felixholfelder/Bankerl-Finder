@@ -49,7 +49,7 @@ class _HomePageState extends State<HomePage> {
                 initialZoom: _zoom,
                 initialCenter: _center,
                 onTap: (TapPosition pos, LatLng latlng) => _openBenchDialog(context, pos, latlng),
-                interactionOptions: const InteractionOptions(flags: InteractiveFlag.drag | InteractiveFlag.pinchZoom),
+                interactionOptions: const InteractionOptions(flags: InteractiveFlag.drag | InteractiveFlag.pinchZoom | InteractiveFlag.pinchMove),
                 maxZoom: 20),
             children: [
               TileLayer(urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png'),
