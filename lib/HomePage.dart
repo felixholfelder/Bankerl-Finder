@@ -1,6 +1,7 @@
 import 'package:bankerl_finder/model/Bench.dart';
 import 'package:bankerl_finder/service/BenchService.dart';
 import 'package:bankerl_finder/service/DialogService.dart';
+import 'package:bankerl_finder/service/SharedPreferencesService.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:geolocator/geolocator.dart';
@@ -16,6 +17,7 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   final BenchService _benchService = BenchService();
+  final SharedPreferencesService _prefService = SharedPreferencesService();
 
   LatLng _center = LatLng(0, 0);
   final double _zoom = 14;
@@ -49,7 +51,8 @@ class _HomePageState extends State<HomePage> {
                 initialZoom: _zoom,
                 initialCenter: _center,
                 onTap: (TapPosition pos, LatLng latlng) => _openBenchDialog(context, pos, latlng),
-                interactionOptions: const InteractionOptions(flags: InteractiveFlag.drag | InteractiveFlag.pinchZoom | InteractiveFlag.pinchMove),
+                interactionOptions: const InteractionOptions(
+                    flags: InteractiveFlag.drag | InteractiveFlag.pinchZoom | InteractiveFlag.pinchMove),
                 maxZoom: 20),
             children: [
               TileLayer(urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png'),
@@ -199,20 +202,29 @@ class _HomePageState extends State<HomePage> {
   }
 
   void _goToCurrPosition() async {
-    Position pos = await _getPosition();
-    setState(() => _center = LatLng(pos.latitude, pos.longitude));
+    Position? pos = await _getPosition();
+
+    if (pos != null) {
+      _center = LatLng(pos.latitude, pos.longitude);
+      await _prefService.saveLocation(_center);
+    } else {
+      _center = await _prefService.getLocation();
+    }
+
+    setState(() => _center);
     _mapController.move(_center, _zoom);
   }
 
-  Future<Position> _getPosition() async {
+  Future<Position?> _getPosition() async {
     final hasPermission = await _handleLocationPermission(context);
 
-    if (!hasPermission)
+    if (!hasPermission) {
       SnackBarService.errorSnackBar(
           context: context, title: "GPS-Fehler", message: "GPS ist für diese App deaktiviert!");
+      return null;
+    }
 
-    Position position = await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
-    return position;
+    return await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
   }
 
   Future<bool> _handleLocationPermission(BuildContext context) async {
